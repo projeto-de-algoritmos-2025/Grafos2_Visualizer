@@ -21,8 +21,9 @@ AMARELO = (255, 255, 0)
 
 # Inicialização do Pygame
 pygame.init()
-tela = pygame.display.set_mode((LARGURA, ALTURA))
+tela = pygame.display.set_mode((LARGURA, ALTURA + 40))
 pygame.display.set_caption("Visualizador do Algoritmo de Dijkstra")
+fonte = pygame.font.SysFont("Arial", 20)
 
 # Classe para representar cada célula da grade
 class Celula:
@@ -55,10 +56,31 @@ class Celula:
 def criar_grade():
     return [[Celula(i, j) for j in range(COLUNAS)] for i in range(LINHAS)]
 
-def desenhar_grade(tela, grade):
+def desenhar_grade(tela, grade, custo=None):
+    tela.fill(BRANCO)
     for linha in grade:
         for celula in linha:
             celula.desenhar(tela)
+
+    # Legenda
+    pygame.draw.rect(tela, VERDE, (10, ALTURA + 5, 20, 20))
+    tela.blit(fonte.render("Início", True, PRETO), (35, ALTURA + 5))
+
+    pygame.draw.rect(tela, VERMELHO, (100, ALTURA + 5, 20, 20))
+    tela.blit(fonte.render("Fim", True, PRETO), (125, ALTURA + 5))
+
+    pygame.draw.rect(tela, PRETO, (170, ALTURA + 5, 20, 20))
+    tela.blit(fonte.render("Parede", True, PRETO), (195, ALTURA + 5))
+
+    pygame.draw.rect(tela, AZUL, (270, ALTURA + 5, 20, 20))
+    tela.blit(fonte.render("Visitado", True, PRETO), (295, ALTURA + 5))
+
+    pygame.draw.rect(tela, AMARELO, (390, ALTURA + 5, 20, 20))
+    tela.blit(fonte.render("Caminho", True, PRETO), (415, ALTURA + 5))
+
+    if custo is not None:
+        tela.blit(fonte.render(f"Custo: {custo}", True, (0, 0, 0)), (520, ALTURA + 5))
+
     pygame.display.update()
 
 def obter_posicao_mouse(pos):
@@ -86,7 +108,9 @@ def dijkstra(grade, inicio, fim):
                 celula_atual = celula_atual.anterior
                 if celula_atual != inicio:
                     celula_atual.cor = AMARELO
-                    desenhar_grade(tela, grade)
+                    desenhar_grade(tela, grade, fim.distancia)
+                    pygame.time.delay(20)
+            desenhar_grade(tela, grade, fim.distancia)
             return
 
         for vizinho in celula_atual.vizinhos:
@@ -99,6 +123,7 @@ def dijkstra(grade, inicio, fim):
                     vizinho.cor = AZUL
 
         desenhar_grade(tela, grade)
+        pygame.time.delay(1)
 
 def main():
     grade = criar_grade()
@@ -112,8 +137,10 @@ def main():
             if evento.type == pygame.QUIT:
                 executando = False
 
-            if pygame.mouse.get_pressed()[0]:  # Clique esquerdo
+            if pygame.mouse.get_pressed()[0]:
                 pos = pygame.mouse.get_pos()
+                if pos[1] >= ALTURA:
+                    continue
                 linha, coluna = obter_posicao_mouse(pos)
                 celula = grade[linha][coluna]
                 if not inicio and celula != fim:
@@ -126,8 +153,10 @@ def main():
                     celula.parede = True
                     celula.cor = PRETO
 
-            elif pygame.mouse.get_pressed()[2]:  # Clique direito
+            elif pygame.mouse.get_pressed()[2]:
                 pos = pygame.mouse.get_pos()
+                if pos[1] >= ALTURA:
+                    continue
                 linha, coluna = obter_posicao_mouse(pos)
                 celula = grade[linha][coluna]
                 if celula == inicio:

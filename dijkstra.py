@@ -37,6 +37,7 @@ class Celula:
         self.distancia = float('inf')
         self.anterior = None
         self.parede = False
+        self.peso = 1  # Peso padrão para cada célula
 
     def desenhar(self, tela):
         pygame.draw.rect(tela, self.cor, (self.x, self.y, TAMANHO_CELULA, TAMANHO_CELULA))
@@ -89,6 +90,16 @@ def obter_posicao_mouse(pos):
     coluna = x // TAMANHO_CELULA
     return linha, coluna
 
+def definir_peso(grade, pos):
+    linha, coluna = obter_posicao_mouse(pos)
+    celula = grade[linha][coluna]
+    if not celula.parede and celula.cor not in [VERDE, VERMELHO]:
+        novo_peso = input("Digite o peso para esta célula (número inteiro): ")
+        if novo_peso.isdigit():
+            celula.peso = int(novo_peso)
+            intensidade = max(0, 255 - celula.peso * 20)  # Ajusta a cor com base no peso
+            celula.cor = (intensidade, intensidade, 255)  # Tons de azul para representar o peso
+
 def dijkstra(grade, inicio, fim):
     contador = itertools.count()
     fila = []
@@ -114,7 +125,7 @@ def dijkstra(grade, inicio, fim):
             return
 
         for vizinho in celula_atual.vizinhos:
-            temp_distancia = celula_atual.distancia + 1
+            temp_distancia = celula_atual.distancia + vizinho.peso  # Usa o peso da célula
             if temp_distancia < vizinho.distancia:
                 vizinho.distancia = temp_distancia
                 vizinho.anterior = celula_atual
@@ -137,7 +148,7 @@ def main():
             if evento.type == pygame.QUIT:
                 executando = False
 
-            if pygame.mouse.get_pressed()[0]:
+            if pygame.mouse.get_pressed()[0]:  # Botão esquerdo do mouse
                 pos = pygame.mouse.get_pos()
                 if pos[1] >= ALTURA:
                     continue
@@ -153,7 +164,7 @@ def main():
                     celula.parede = True
                     celula.cor = PRETO
 
-            elif pygame.mouse.get_pressed()[2]:
+            elif pygame.mouse.get_pressed()[2]:  # Botão direito do mouse
                 pos = pygame.mouse.get_pos()
                 if pos[1] >= ALTURA:
                     continue
@@ -165,6 +176,11 @@ def main():
                     fim = None
                 celula.parede = False
                 celula.cor = BRANCO
+
+            elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 2:  # Botão do meio do mouse
+                pos = pygame.mouse.get_pos()
+                if pos[1] < ALTURA:
+                    definir_peso(grade, pos)
 
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_SPACE and inicio and fim:
